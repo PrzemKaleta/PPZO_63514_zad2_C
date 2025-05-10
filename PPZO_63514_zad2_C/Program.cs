@@ -89,6 +89,23 @@ public class Account
         return Balance;
     }
 
+    public void DisplayTransactionHistory()
+    {
+        Console.WriteLine($"\n--- Historia transakcji dla konta {AccountNumber} ({OwnerName}) ---");
+        if (TransactionHistory.Count == 0)
+        {
+            Console.WriteLine("Brak transakcji na tym koncie");
+        }
+        else
+        {
+            foreach (Transaction transactionItem in TransactionHistory)
+            {
+                Console.WriteLine(transactionItem);
+            }
+        }
+        Console.WriteLine("--- Koniec historii ---");
+    }
+
     public class Bank
     {
         public Dictionary<string, Account> Accounts { get; }
@@ -212,6 +229,9 @@ public class Account
                     Console.WriteLine("2. Wpłać środki na konto");
                     Console.WriteLine("3. Wypłać środki z konta");
                     Console.WriteLine("4. Zrób przelew między kontami");
+                    Console.WriteLine("5. Pokaż saldo konta");
+                    Console.WriteLine("6. Pokaż historię transakcji konta");
+                    Console.WriteLine("7. Pokaż wszystkie konta w banku");
                     Console.WriteLine("0. Wyjdź z systemu");
 
                     string? userChoice = Console.ReadLine();
@@ -348,6 +368,58 @@ public class Account
                                 }
                             }
                             mainBank.Transfer(fromAccountNumberInput, toAccountNumberInput, amountValueTransfer);
+                            break;
+
+                        case "5":
+                            Console.WriteLine("\n--- Sprawdzanie salda ---");
+                            Console.Write("Podaj numer konta, którego saldo chcesz sprawdzić: ");
+                            string? accountNumberInputBalance = Console.ReadLine();
+                            if (string.IsNullOrEmpty(accountNumberInputBalance)) { Console.WriteLine("Numer konta nie może być pusty."); break; }
+
+                            Account? targetAccountBalance = mainBank.GetAccount(accountNumberInputBalance);
+                            if (targetAccountBalance != null)
+                            {
+                                Console.WriteLine($"Saldo konta {targetAccountBalance.AccountNumber} ({targetAccountBalance.OwnerName}): " +
+                                                  $"{targetAccountBalance.GetBalance()} PLN");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Konto o numerze {accountNumberInputBalance} nie istnieje.");
+                            }
+                            break;
+
+                        case "6":
+                            Console.WriteLine("\n--- Historia transakcji ---");
+                            Console.Write("Podaj numer konta, którego historię chcesz zobaczyć: ");
+                            string? accountNumberInputHistory = Console.ReadLine();
+                            if (string.IsNullOrEmpty(accountNumberInputHistory)) { Console.WriteLine("Numer konta nie może być pusty."); break; }
+
+                            Account? targetAccountHistory = mainBank.GetAccount(accountNumberInputHistory);
+                            if (targetAccountHistory != null)
+                            {
+                                targetAccountHistory.DisplayTransactionHistory();
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Konto o numerze {accountNumberInputHistory} nie istnieje");
+                            }
+                            break;
+
+                        case "7":
+                            Console.WriteLine("\n--- Lista wszystkich kont ---");
+                            if (mainBank.Accounts.Count == 0)
+                            {
+                                Console.WriteLine("W banku nie ma jeszcze żadnych kont");
+                            }
+                            else
+                            {
+                                foreach (Account accountObj in mainBank.Accounts.Values)
+                                {
+                                    Console.WriteLine($"  Numer konta: {accountObj.AccountNumber}, Właściciel: {accountObj.OwnerName}, " +
+                                                      $"Saldo: {accountObj.Balance} PLN");
+                                }
+                            }
+                            Console.WriteLine("------------------------------");
                             break;
 
                         case "0":
