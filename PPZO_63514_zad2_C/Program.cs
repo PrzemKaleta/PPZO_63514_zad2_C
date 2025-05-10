@@ -84,6 +84,11 @@ public class Account
         }
     }
 
+    public int GetBalance()
+    {
+        return Balance;
+    }
+
     public class Bank
     {
         public Dictionary<string, Account> Accounts { get; }
@@ -134,6 +139,66 @@ public class Account
             return account;
         }
 
+        public bool Transfer(string fromAccountNumber, string toAccountNumber, int amountToTransfer)
+        {
+            if (amountToTransfer <= 0)
+            {
+                Console.WriteLine("Błąd: Kwota przelewu musi być dodatnią liczbą całkowitą");
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(fromAccountNumber) || string.IsNullOrEmpty(toAccountNumber))
+            {
+                Console.WriteLine("Błąd: Numery kont źródłowego i docelowego nie mogą być puste.");
+                return false;
+            }
+
+            Account? sourceAccount = GetAccount(fromAccountNumber);
+            Account? destinationAccount = GetAccount(toAccountNumber);
+
+            if (sourceAccount == null)
+            {
+                Console.WriteLine($"Błąd: Konto źródłowe {fromAccountNumber} nie istnieje");
+                return false;
+            }
+            if (destinationAccount == null)
+            {
+                Console.WriteLine($"Błąd: Konto docelowe {toAccountNumber} nie istnieje");
+                return false;
+            }
+            if (fromAccountNumber == toAccountNumber)
+            {
+                Console.WriteLine("Błąd: Nie można przelać środków na to samo konto");
+                return false;
+            }
+
+            if (sourceAccount.GetBalance() >= amountToTransfer)
+            {
+                sourceAccount.AdjustBalance(-amountToTransfer);
+                destinationAccount.AdjustBalance(amountToTransfer);
+
+                Transaction outgoingTransaction = new Transaction("przelew wychodzący", amountToTransfer,
+                    $"Przelew do {destinationAccount.OwnerName} na konto o numerze {toAccountNumber}");
+                sourceAccount.TransactionHistory.Add(outgoingTransaction);
+
+                Transaction incomingTransaction = new Transaction("przelew przychodzący", amountToTransfer,
+                    $"Przelew od {sourceAccount.OwnerName} ({fromAccountNumber})");
+                destinationAccount.TransactionHistory.Add(incomingTransaction);
+
+                Console.WriteLine($"\nPrzelew {amountToTransfer} PLN z konta o numerze {fromAccountNumber} " +
+                                  $"na konto o numerze {toAccountNumber} zakończony pomyślnie");
+                Console.WriteLine($"Nowe saldo konta {fromAccountNumber}: {sourceAccount.GetBalance()} PLN");
+                Console.WriteLine($"Nowe saldo konta {toAccountNumber}: {destinationAccount.GetBalance()} PLN");
+                return true;
+            }
+            else
+            {
+                Console.WriteLine($"Błąd: Niewystarczające środki na koncie {fromAccountNumber} " +
+                                  $"do wykonania przelewu w kwocie {amountToTransfer} PLN");
+                return false;
+            }
+        }
+
         public class Program
         {
             public static void Main(string[] args)
@@ -146,6 +211,7 @@ public class Account
                     Console.WriteLine("1. Utwórz nowe konto");
                     Console.WriteLine("2. Wpłać środki na konto");
                     Console.WriteLine("3. Wypłać środki z konta");
+                    Console.WriteLine("4. Zrób przelew między kontami");
                     Console.WriteLine("0. Wyjdź z systemu");
 
                     string? userChoice = Console.ReadLine();
@@ -252,6 +318,36 @@ public class Account
                             {
                                 Console.WriteLine($"Konto o numerze {accountNumberInputWithdraw} nie istnieje");
                             }
+                            break;
+
+                        case "4":
+                            Console.WriteLine("\n--- Przelew środków ---");
+                            Console.Write("Podaj numer konta, z którego chcesz zrobić przelew: ");
+                            string? fromAccountNumberInput = Console.ReadLine();
+                            Console.Write("Podaj numer konta, na które chcesz zrobić przelew: ");
+                            string? toAccountNumberInput = Console.ReadLine();
+
+                            if (string.IsNullOrEmpty(fromAccountNumberInput) || string.IsNullOrEmpty(toAccountNumberInput))
+                            {
+                                Console.WriteLine("Numery kont nie mogą być puste.");
+                                break;
+                            }
+
+                            int amountValueTransfer = 0;
+                            while (true)
+                            {
+                                Console.Write("Podaj kwotę przelewu (pełna kwota): ");
+                                string? amountInput = Console.ReadLine();
+                                if (int.TryParse(amountInput, out amountValueTransfer))
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Nieprawidłowa kwota. Wpisz liczbę całkowitą. Spróbuj ponownie.");
+                                }
+                            }
+                            mainBank.Transfer(fromAccountNumberInput, toAccountNumberInput, amountValueTransfer);
                             break;
 
                         case "0":
